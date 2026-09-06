@@ -12,7 +12,7 @@ export const middleware = (request: NextRequest) => {
   const { pathname } = request.nextUrl;
 
   // Without login not go to dashboard
-  if (!token && pathname.startsWith("/dashboard")) {
+  if (!token && pathname.startsWith("/dashboardGroup")) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

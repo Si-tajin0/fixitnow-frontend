@@ -1,35 +1,28 @@
-// src/app/layout.tsx
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import { Navbar } from "@/components/shared/Navbar";
 import AppProvider from "@/providers/AppProvider";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { CustomJwtPayload, getCurrentUser } from "@/service/auth.sevice";
+import type { Metadata } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FixItNow | Your Trusted Home Service Platform",
+  title: "FixItNow",
   description: "Book the best home service technicians in your area.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
+  const user = (await getCurrentUser()) as CustomJwtPayload | null;
+
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <AppProvider>{children}</AppProvider>
+      <body className="antialiased bg-gray-50">
+        <AppProvider>
+          <Navbar user={user} />
+          <main className="min-h-screen">{children}</main>
+        </AppProvider>
       </body>
     </html>
   );

@@ -2,6 +2,7 @@
 
 import { proxy } from "@/apiFetcher";
 import { LoginData, RegisterData } from "@/lib/types";
+import { jwtDecode } from "jwt-decode";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
@@ -74,4 +75,16 @@ export const registerUserAction = async (fromData: RegisterData) => {
   } catch (error) {
     return { success: false, messsage: "Something went Wrong!", error };
   }
+};
+
+// Logout action
+
+export const logoutUserAction = async () => {
+  const cookieStore = await cookies();
+  cookieStore.delete("accessToken"); // কুকি ডিলিট করে দিলাম
+
+  // clear the cash
+  revalidatePath("/");
+
+  return { success: true };
 };

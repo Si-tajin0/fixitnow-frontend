@@ -50,6 +50,7 @@ export default function LoginForm() {
     if (result.success) {
       toast.success(result.message);
       router.push("/");
+      router.refresh();
     } else {
       toast.error(result.message);
     }

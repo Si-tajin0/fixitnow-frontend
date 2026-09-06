@@ -1,14 +1,11 @@
 "use server";
 
 import { proxy } from "@/apiFetcher";
+import { LoginData, RegisterData } from "@/lib/types";
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
-type LoginData = {
-  email?: string;
-  password?: string;
-  [key: string]: unknown;
-};
-
+// Login user
 export async function loginUserAction(fromData: LoginData) {
   try {
     const response = await proxy("/api/auth/login", {
@@ -34,6 +31,9 @@ export async function loginUserAction(fromData: LoginData) {
       });
     }
 
+    revalidatePath("/");
+    revalidatePath("/dashboard");
+
     return {
       success: true,
       message: "Login Successfull!",
@@ -47,3 +47,31 @@ export async function loginUserAction(fromData: LoginData) {
     };
   }
 }
+
+// Register
+
+export const registerUserAction = async (fromData: RegisterData) => {
+  try {
+    const response = await proxy("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify(fromData),
+    });
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: response.data?.message || "Register Failed!",
+      };
+    }
+
+    revalidatePath("/");
+    revalidatePath("/dashboard");
+    return {
+      success: true,
+      message: "Register Successful! Please Login.",
+      data: response.data,
+    };
+  } catch (error) {
+    return { success: false, messsage: "Something went Wrong!", error };
+  }
+};

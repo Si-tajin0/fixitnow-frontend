@@ -17,6 +17,6 @@ export const getCurrentUser = async () => {
     const decoded = jwtDecode<CustomJwtPayload>(token);
     return decoded;
   } catch (error) {
-    return error;
+    return null;
   }
 };

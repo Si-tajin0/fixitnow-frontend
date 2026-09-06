@@ -2,7 +2,6 @@
 
 import { proxy } from "@/apiFetcher";
 import { LoginData, RegisterData } from "@/lib/types";
-import { jwtDecode } from "jwt-decode";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
@@ -44,7 +43,6 @@ export async function loginUserAction(fromData: LoginData) {
     return {
       success: false,
       message: "Something went wrong!",
-      error,
     };
   }
 }
@@ -73,7 +71,7 @@ export const registerUserAction = async (fromData: RegisterData) => {
       data: response.data,
     };
   } catch (error) {
-    return { success: false, messsage: "Something went Wrong!", error };
+    return { success: false, messsage: "Something went Wrong!" };
   }
 };
 

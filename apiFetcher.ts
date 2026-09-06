@@ -1,6 +1,4 @@
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://fixitnow-backend-assignment4.vercel.app";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const proxy = async (endpoint: string, options: RequestInit = {}) => {
   try {

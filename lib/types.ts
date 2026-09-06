@@ -42,3 +42,22 @@ export interface BookingRequestData {
   serviceDate: string;
   scheduledTime: string;
 }
+
+export interface Booking {
+  id: string;
+  serviceId: string;
+  technicianId: string;
+  customerId: string;
+  serviceDate: string;
+  scheduledTime: string;
+  status:
+    | "REQUESTED"
+    | "ACCEPTED"
+    | "PAID"
+    | "IN_PROGRESS"
+    | "COMPLETED"
+    | "DECLINED"
+    | "CANCELLED";
+  service?: Service;
+  technician?: Technician;
+}

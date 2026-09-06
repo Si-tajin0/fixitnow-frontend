@@ -6,6 +6,7 @@ import { jwtDecode } from "jwt-decode";
 import { CustomJwtPayload } from "./auth.sevice";
 import { BookingRequestData, Service } from "@/lib/types";
 
+// get single booking action
 export const getSingleServiceAction = async (
   id: string,
 ): Promise<Service | null> => {
@@ -24,6 +25,7 @@ export const getSingleServiceAction = async (
   }
 };
 
+// create booking action
 export const createBookingAction = async (bookingData: BookingRequestData) => {
   try {
     const cookieStore = await cookies();
@@ -61,5 +63,26 @@ export const createBookingAction = async (bookingData: BookingRequestData) => {
     return { success: true, message: "Booking requested successfully!" };
   } catch (error) {
     return { success: false, message: "Something went wrong!" };
+  }
+};
+
+// get my booking action
+export const getMyBookingsAction = async () => {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("accessToken")?.value;
+
+    if (!token) return [];
+
+    const response = await proxy("/api/bookings", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) return [];
+    return response.data?.data || response.data || [];
+  } catch (error) {
+    return [];
   }
 };

@@ -10,11 +10,13 @@ import { Booking } from "@/lib/types";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { createPaymentAction } from "@/service/paymentActions";
 
 export default function CustomerDashboardPage() {
   const { data: bookings, isLoading, isError } = useBookings();
   const queryClient = useQueryClient();
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [payingId, setPayingId] = useState<string | null>(null);
 
   // cancel function
   const handleCancel = async (id: string) => {
@@ -28,6 +30,19 @@ export default function CustomerDashboardPage() {
       toast.error(result.message);
     }
     setLoadingId(null);
+  };
+
+  // Payment handle function
+  const handlePayment = async (id: string) => {
+    setPayingId(id);
+    const result = await createPaymentAction(id);
+
+    if (result.success && result.paymentUrl) {
+      window.location.href = result.paymentUrl;
+    } else {
+      toast.error(result.message);
+      setPayingId(null);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -116,8 +131,12 @@ export default function CustomerDashboardPage() {
                 )}
 
                 {booking.status === "ACCEPTED" && (
-                  <Button className="bg-blue-600 hover:bg-blue-700 px-8 cursor-pointer">
-                    Pay Now
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700 px-8 cursor-pointer"
+                    onClick={() => handlePayment(booking.id)}
+                    disabled={payingId === booking.id}
+                  >
+                    {payingId === booking.id ? "Redirecting..." : "Pay Now"}
                   </Button>
                 )}
 

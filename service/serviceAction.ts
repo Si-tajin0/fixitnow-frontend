@@ -5,7 +5,7 @@ import { proxy } from "@/apiFetcher";
 
 export const fetchServicesAction = async () => {
   try {
-    const response = await proxy("/services");
+    const response = await proxy("/api/services");
 
     if (!response.ok) {
       throw new Error(response.data?.message || "Failed to fetch services");

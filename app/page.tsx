@@ -1,4 +1,3 @@
-// app/page.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -10,10 +9,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useServices } from "@/hooks/useServices";
+import { Service } from "@/lib/types";
 import Link from "next/link";
 
 export default function HomePage() {
-  // React Query দিয়ে ব্যাকএন্ড থেকে ডেটা আনা হচ্ছে
+  // React Query use the fetch data
   const { data: services, isLoading, isError } = useServices();
 
   return (
@@ -35,7 +35,7 @@ export default function HomePage() {
           Featured Services
         </h2>
 
-        {/* 💡 Loading Skeleton (Mandatory Requirement) */}
+        {/* Loading Skeleton   */}
         {isLoading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((n) => (
@@ -73,7 +73,7 @@ export default function HomePage() {
             আপাতত তোমার ব্যাকএন্ডের রেসপন্স অনুযায়ী ডেটা দেখাচ্ছি।
             তোমার ব্যাকএন্ডে সার্ভিসের নাম, দাম (price) আছে ধরে নিচ্ছি।
           */}
-          {services?.map((service: any) => (
+          {services?.map((service: Service) => (
             <Card
               key={service.id}
               className="flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
@@ -88,8 +88,10 @@ export default function HomePage() {
                 <p className="text-3xl font-bold text-blue-600">
                   ${service.price}
                 </p>
-                {/* তোমার ব্যাকএন্ডে ডেসক্রিপশন থাকলে এটা আনকমেন্ট করতে পারো */}
-                {/* <p className="text-gray-500 mt-2 line-clamp-2">{service.description}</p> */}
+
+                <p className="text-gray-500 mt-2 line-clamp-2">
+                  {service.description}
+                </p>
               </CardContent>
 
               <CardFooter>

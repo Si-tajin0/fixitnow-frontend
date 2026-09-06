@@ -1,12 +1,34 @@
 "use client";
 
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+
 import { useBookings } from "@/hooks/useBookings";
+import { cancelBookingAction } from "@/service/bookingActions"; // 💡
+import { Booking } from "@/lib/types";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Booking } from "@/lib/types";
 
 export default function CustomerDashboardPage() {
   const { data: bookings, isLoading, isError } = useBookings();
+  const queryClient = useQueryClient();
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  // cancel function
+  const handleCancel = async (id: string) => {
+    setLoadingId(id);
+    const result = await cancelBookingAction(id);
+
+    if (result.success) {
+      toast.success(result.message);
+      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
+    } else {
+      toast.error(result.message);
+    }
+    setLoadingId(null);
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -29,7 +51,7 @@ export default function CustomerDashboardPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+    <div className="max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold text-gray-800 mb-8">My Bookings 🛠️</h1>
 
       {isLoading && (
@@ -53,6 +75,7 @@ export default function CustomerDashboardPage() {
       <div className="grid gap-6">
         {bookings?.map((booking: Booking) => (
           <Card key={booking.id} className="shadow-sm">
+            {/* ... CardHeader আগের মতই থাকবে ... */}
             <CardHeader className="flex flex-row items-center justify-between bg-gray-50 rounded-t-lg pb-4">
               <div>
                 <CardTitle className="text-xl text-blue-600">
@@ -84,20 +107,24 @@ export default function CustomerDashboardPage() {
                 {booking.status === "REQUESTED" && (
                   <Button
                     variant="outline"
-                    className="text-red-600 border-red-600 hover:bg-red-50"
+                    className="text-red-600 border-red-600 hover:bg-red-50 cursor-pointer"
+                    onClick={() => handleCancel(booking.id)}
+                    disabled={loadingId === booking.id}
                   >
-                    Cancel
+                    {loadingId === booking.id ? "Cancelling..." : "Cancel"}
                   </Button>
                 )}
+
                 {booking.status === "ACCEPTED" && (
                   <Button className="bg-blue-600 hover:bg-blue-700 px-8 cursor-pointer">
                     Pay Now
                   </Button>
                 )}
+
                 {booking.status === "COMPLETED" && (
                   <Button
                     variant="outline"
-                    className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                    className="border-blue-600 text-blue-600 hover:bg-blue-50 cursor-pointer"
                   >
                     Leave a Review
                   </Button>

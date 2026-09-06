@@ -86,3 +86,65 @@ export const getMyBookingsAction = async () => {
     return [];
   }
 };
+
+// technician  updated booking action
+
+export const updateBookingStatusAction = async (id: string, status: string) => {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("accessToken")?.value;
+
+    if (!token) {
+      return { success: false, message: "Unauthorized. Please login first." };
+    }
+
+    const response = await proxy(`/api/technician//bookings/${id}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: response.data?.message || "Failed to update status!",
+      };
+    }
+
+    return { success: true, message: `Booking marked as ${status}!` };
+  } catch (error) {
+    return { success: false, message: "Something went wrong!" };
+  }
+};
+
+// customer cancel booking action
+
+export const cancelBookingAction = async (id: string) => {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("accessToken")?.value;
+
+    if (!token) return { success: false, message: "Unauthorized." };
+
+    const response = await proxy(`/api/bookings/${id}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status: "CANCELLED" }),
+    });
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: response.data?.message || "Failed to cancel booking!",
+      };
+    }
+
+    return { success: true, message: "Booking cancelled successfully!" };
+  } catch (error) {
+    return { success: false, message: "Something went wrong!" };
+  }
+};

@@ -12,8 +12,13 @@ export const middleware = (request: NextRequest) => {
   const { pathname } = request.nextUrl;
 
   // Without login not go to dashboard
-  if (!token && pathname.startsWith("/dashboardGroup")) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  if (
+    !token &&
+    (pathname.startsWith("/dashboard") || pathname.startsWith("/book"))
+  ) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   // use the token and decode the role
@@ -31,6 +36,10 @@ export const middleware = (request: NextRequest) => {
           return NextResponse.redirect(
             new URL("/dashboard/technician", request.url),
           );
+
+        if (pathname.startsWith("/book") && decoded.role !== "CUSTOMER") {
+          return NextResponse.redirect(new URL("/", request.url));
+        }
 
         return NextResponse.redirect(
           new URL("/dashboard/customer", request.url),
@@ -63,5 +72,5 @@ export const middleware = (request: NextRequest) => {
 };
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/register"],
+  matcher: ["/dashboard/:path*", "/book/:path*", "/login", "/register"],
 };

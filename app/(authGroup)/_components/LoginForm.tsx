@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { loginUserAction } from "../_actions/authActions";
 
 // Zod Validation Schema
@@ -32,6 +32,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const {
     register,
@@ -49,7 +50,13 @@ export default function LoginForm() {
 
     if (result.success) {
       toast.success(result.message);
-      router.push("/");
+      const redirectUrl = searchParams.get("redirect");
+      if (redirectUrl) {
+        router.push(redirectUrl);
+      } else {
+        router.push("/");
+      }
+
       router.refresh();
     } else {
       toast.error(result.message);

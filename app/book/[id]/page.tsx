@@ -60,7 +60,6 @@ export default function BookingPage() {
       toast.error("Please select a date and time slot!");
       return;
     }
-
     if (!service) {
       toast.error("Service not found!");
       return;
@@ -83,20 +82,19 @@ export default function BookingPage() {
     } else {
       toast.error(result.message);
     }
-
     setIsSubmitting(false);
   };
 
   if (isLoading)
     return (
-      <div className="text-center mt-20 text-xl font-bold">
+      <div className="text-center mt-20 text-xl font-bold animate-pulse">
         Loading Service Details...
       </div>
     );
   if (!service)
     return (
       <div className="text-center mt-20 text-red-500 text-xl">
-        Service not found!
+        Sorry, no specific service found for this technician!
       </div>
     );
 
@@ -107,7 +105,7 @@ export default function BookingPage() {
           <CardHeader className="bg-blue-600 text-white rounded-t-xl">
             <CardTitle className="text-2xl">Confirm Your Booking</CardTitle>
             <CardDescription className="text-blue-100">
-              Select your preferred date and time for the service.
+              Select your preferred date and time.
             </CardDescription>
           </CardHeader>
 
@@ -129,7 +127,7 @@ export default function BookingPage() {
               <Popover>
                 <PopoverTrigger
                   className={cn(
-                    "w-full justify-start text-left font-normal cursor-pointer",
+                    "inline-flex h-10 w-full items-center justify-start rounded-md border border-input bg-background px-3 py-2 text-left text-sm font-normal ring-offset-background cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                     !date && "text-muted-foreground",
                   )}
                 >
@@ -141,7 +139,7 @@ export default function BookingPage() {
                     mode="single"
                     selected={date}
                     onSelect={setDate}
-                    disabled={(date) => date < new Date()}
+                    disabled={(d) => d < new Date()}
                   />
                 </PopoverContent>
               </Popover>
@@ -149,7 +147,7 @@ export default function BookingPage() {
 
             <div className="space-y-2">
               <Label>Select Time Slot</Label>
-              <Select onValueChange={(value) => setTimeSlot(value as string)}>
+              <Select onValueChange={(value) => setTimeSlot(String(value))}>
                 <SelectTrigger className="w-full cursor-pointer">
                   <SelectValue placeholder="Choose a time" />
                 </SelectTrigger>

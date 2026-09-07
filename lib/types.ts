@@ -68,3 +68,26 @@ export interface CreateServicePayload {
   price: number;
   categoryId: string;
 }
+
+export interface UpdateTechnicianProfilePayload {
+  skills: string[];
+  experience: number;
+  pricing: number;
+  isAvailable: boolean;
+}
+
+export interface TechnicianDisplayProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  role: string;
+  rating: number;
+  technicianProfile: {
+    skills: string[];
+    experience: number;
+    pricing: number;
+    isAvailable: boolean;
+  } | null;
+}

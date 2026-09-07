@@ -1,23 +1,30 @@
+// service/bookingActions.ts
 "use server";
 
 import { proxy } from "@/apiFetcher";
 import { BookingRequestData, Service } from "@/lib/types";
 import { jwtDecode } from "jwt-decode";
 import { cookies } from "next/headers";
-import { CustomJwtPayload } from "./auth.service";
 
-// get single booking action
+interface CustomJwtPayload {
+  role: string;
+  email: string;
+}
+
+// 💡 ম্যাজিক: টেকনিশিয়ানের আইডি দিয়ে তার সার্ভিসটা খুঁজে বের করবে!
 export const getSingleServiceAction = async (
   id: string,
 ): Promise<Service | null> => {
   try {
     const response = await proxy(`/api/services`);
-
     if (!response.ok) return null;
 
     const allServices: Service[] = response.data?.data || response.data || [];
 
-    const singleService = allServices.find((service) => service.id === id);
+    // 💡 এখানে technicianId অথবা service id দুইটা দিয়েই খোঁজার ব্যবস্থা রাখলাম
+    const singleService = allServices.find(
+      (service) => service.technicianId === id || service.id === id,
+    );
 
     return singleService || null;
   } catch (error) {
@@ -44,20 +51,17 @@ export const createBookingAction = async (bookingData: BookingRequestData) => {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(bookingData),
     });
 
     if (!response.ok) {
       let errorMsg = response.data?.message || "Failed to book service!";
-
       if (errorMsg.includes("Prisma") || errorMsg.length > 50) {
         errorMsg = "Something went wrong on the server. Please try again!";
       }
-      return {
-        success: false,
-        message: errorMsg,
-      };
+      return { success: false, message: errorMsg };
     }
 
     return { success: true, message: "Booking requested successfully!" };
@@ -75,9 +79,7 @@ export const getMyBookingsAction = async () => {
     if (!token) return [];
 
     const response = await proxy("/api/bookings", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
 
     if (!response.ok) return [];
@@ -87,21 +89,20 @@ export const getMyBookingsAction = async () => {
   }
 };
 
-// technician  updated booking action
-
+// technician updated booking action
 export const updateBookingStatusAction = async (id: string, status: string) => {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("accessToken")?.value;
 
-    if (!token) {
+    if (!token)
       return { success: false, message: "Unauthorized. Please login first." };
-    }
 
-    const response = await proxy(`/api/technician//bookings/${id}`, {
+    const response = await proxy(`/api/technician/bookings/${id}`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ status }),
     });
@@ -120,7 +121,6 @@ export const updateBookingStatusAction = async (id: string, status: string) => {
 };
 
 // customer cancel booking action
-
 export const cancelBookingAction = async (id: string) => {
   try {
     const cookieStore = await cookies();
@@ -132,6 +132,7 @@ export const cancelBookingAction = async (id: string) => {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ status: "CANCELLED" }),
     });

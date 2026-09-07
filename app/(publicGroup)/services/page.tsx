@@ -1,10 +1,19 @@
+// app/(publicGroup)/services/page.tsx
 "use client";
 
-import { FilterX, Search } from "lucide-react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import {
+  Search,
+  CheckCircle2,
+  XCircle,
+  Star,
+  Wrench,
+  Info,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -12,236 +21,216 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  getAllPublicTechniciansAction,
+  getMyRoleAction,
+} from "@/service/technicianActions";
+import { TechnicianDisplayProfile } from "@/lib/types"; // 💡 any এর বদলে সঠিক টাইপ!
 
-import { Category, Service } from "@/lib/types";
-import { getAllPublicServicesAction } from "@/service/serviceActions";
-
-export default function ServicesPage() {
-  const [services, setServices] = useState<Service[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+export default function PublicTechniciansPage() {
+  // 💡 ১. No any! একদম ১০০% টাইপ-সেফ!
+  const [technicians, setTechnicians] = useState<TechnicianDisplayProfile[]>(
+    [],
+  );
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Filter States
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
 
-  // 💡 ১. পেজ লোড হলে প্রথমবার সব ডেটা আনবে এবং ক্যাটাগরি বের করবে
   useEffect(() => {
-    const fetchInitialData = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
-      const initialServices = await getAllPublicServicesAction("");
-      setServices(initialServices);
 
-      const uniqueCategories: Category[] = [];
-      const catMap = new Map();
+      // একই সাথে টেকনিশিয়ান লিস্ট এবং ইউজারের রোল আনবো
+      const [data, role] = await Promise.all([
+        getAllPublicTechniciansAction(),
+        getMyRoleAction(),
+      ]);
 
-      initialServices.forEach((s: Service) => {
-        if (s.category && !catMap.has(s.category.id)) {
-          catMap.set(s.category.id, true);
-          uniqueCategories.push(s.category);
-        }
-      });
-      setCategories(uniqueCategories);
+      setTechnicians(data);
+      setUserRole(role);
       setIsLoading(false);
     };
-    fetchInitialData();
+    fetchData();
   }, []);
 
-  // 💡 ২. Real-time Search & Filter (Debounce Effect)
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
-      setIsLoading(true);
-
-      const queryParams = new URLSearchParams();
-      if (searchTerm) queryParams.append("searchTerm", searchTerm);
-
-      if (selectedCategory && selectedCategory !== "all")
-        queryParams.append("categoryId", selectedCategory);
-      if (minPrice) queryParams.append("minPrice", minPrice);
-      if (maxPrice) queryParams.append("maxPrice", maxPrice);
-
-      const filteredData = await getAllPublicServicesAction(
-        queryParams.toString(),
-      );
-      setServices(filteredData);
-      setIsLoading(false);
-    }, 500); // 👈 ৫০০ ms Delay
-
-    return () => clearTimeout(delayDebounceFn); // Cleanup function
-  }, [searchTerm, selectedCategory, minPrice, maxPrice]);
-
-  const handleClearFilters = () => {
-    setSearchTerm("");
-    setSelectedCategory("all");
-    setMinPrice("");
-    setMaxPrice("");
-  };
+  const filteredTechnicians = technicians.filter((tech) => {
+    const searchLower = searchTerm.toLowerCase();
+    const nameMatch = tech.name?.toLowerCase().includes(searchLower);
+    const skillsMatch = tech.technicianProfile?.skills?.some((skill: string) =>
+      skill.toLowerCase().includes(searchLower),
+    );
+    return nameMatch || skillsMatch;
+  });
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Left Sidebar - Filter Panel */}
-        <div className="w-full md:w-1/4 space-y-6 bg-white p-6 rounded-xl shadow-sm border h-fit sticky top-24">
-          <h2 className="text-xl font-bold text-gray-800 border-b pb-4">
-            Filter Services
-          </h2>
+      <div className="text-center space-y-4 mb-12">
+        <h1 className="text-4xl font-extrabold text-gray-900">
+          Find the Best Technicians
+        </h1>
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          Browse through our verified professionals. Check their live skills,
+          pricing, and availability!
+        </p>
+      </div>
 
-          {/* 💡 Real-time Search */}
-          <div className="space-y-2">
-            <Label>Search</Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search by name..."
-                className="pl-9"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
+      <div className="max-w-xl mx-auto mb-12 relative">
+        <Search className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
+        <Input
+          placeholder="Search by technician name or skills (e.g., AC Repair, Plumbing)..."
+          className="pl-12 py-6 text-lg rounded-full shadow-sm"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
 
-          {/* 💡 Auto Extracted Categories */}
-          <div className="space-y-2">
-            <Label>Category</Label>
-            <Select
-              value={selectedCategory}
-              onValueChange={(value) => {
-                if (value !== null) setSelectedCategory(value);
-              }}
-            >
-              <SelectTrigger className="w-full cursor-pointer">
-                <SelectValue placeholder="All Categories">
-                  {selectedCategory === "all"
-                    ? "All Categories"
-                    : categories.find((c) => c.id === selectedCategory)?.name ||
-                      "All Categories"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Price Range ($)</Label>
-            <div className="flex items-center space-x-2">
-              <Input
-                type="number"
-                placeholder="Min"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-              />
-              <span className="text-gray-500">-</span>
-              <Input
-                type="number"
-                placeholder="Max"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="pt-4">
-            <Button
-              onClick={handleClearFilters}
-              variant="outline"
-              className="w-full text-red-600 border-red-200 hover:bg-red-50 cursor-pointer"
-            >
-              <FilterX className="w-4 h-4 mr-2" />
-              Clear Filters
-            </Button>
-          </div>
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[1, 2, 3].map((n) => (
+            <Card
+              key={n}
+              className="w-full h-80 animate-pulse bg-gray-100 border-gray-200"
+            />
+          ))}
         </div>
+      ) : filteredTechnicians.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredTechnicians.map((tech) => {
+            const profile = tech.technicianProfile || {
+              skills: [],
+              experience: 0,
+              pricing: 0,
+              isAvailable: false,
+            };
+            const isAvailable = profile.isAvailable !== false;
 
-        {/* Right Side - Services Grid */}
-        <div className="w-full md:w-3/4">
-          <h1 className="text-3xl font-extrabold text-gray-900 mb-8">
-            Available Services
-          </h1>
+            // 💡 ২. Dynamic Bio Generation!
+            const bio =
+              profile.skills?.length > 0
+                ? `Professional technician with ${profile.experience || 0} years of experience specializing in ${profile.skills.slice(0, 2).join(", ")} and more.`
+                : "Professional home service technician ready to assist you.";
 
-          {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((n) => (
-                <Card
-                  key={n}
-                  className="w-full h-64 animate-pulse bg-gray-100 border-gray-200"
-                />
-              ))}
-            </div>
-          ) : services.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {services.map((service) => (
-                <Card
-                  key={service.id}
-                  className="flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
-                >
-                  <CardHeader>
-                    {service.category && (
-                      <span className="text-[10px] uppercase font-bold text-blue-600 bg-blue-50 w-fit px-2 py-0.5 rounded mb-2">
-                        {service.category.name}
+            return (
+              <Card
+                key={tech.id}
+                className="flex flex-col justify-between hover:shadow-xl transition-shadow duration-300 border-t-4 border-t-blue-500"
+              >
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-2xl text-gray-800">
+                        {tech.name}
+                      </CardTitle>
+                      <div className="flex items-center text-yellow-500 mt-1 font-bold text-sm">
+                        <Star className="w-4 h-4 mr-1 fill-current" />{" "}
+                        {tech.rating || 0} / 5
+                      </div>
+                    </div>
+
+                    {isAvailable ? (
+                      <span className="flex items-center text-[10px] uppercase font-bold bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                        <CheckCircle2 className="w-3 h-3 mr-1" /> Available
+                      </span>
+                    ) : (
+                      <span className="flex items-center text-[10px] uppercase font-bold bg-red-100 text-red-700 px-2 py-1 rounded-full">
+                        <XCircle className="w-3 h-3 mr-1" /> Busy
                       </span>
                     )}
-                    <CardTitle className="text-xl text-gray-800 line-clamp-1">
-                      {service.name}
-                    </CardTitle>
-                  </CardHeader>
+                  </div>
+                </CardHeader>
 
-                  <CardContent>
-                    <p className="text-3xl font-bold text-gray-900">
-                      ${service.price}
-                    </p>
-                    <p className="text-gray-500 mt-2 text-sm line-clamp-2">
-                      {service.description}
-                    </p>
-                  </CardContent>
+                <CardContent className="space-y-4 pt-4">
+                  {/* 💡 Dynamic Bio Text */}
+                  <div className="text-sm text-gray-600 flex items-start bg-gray-50 p-3 rounded-lg border border-gray-100">
+                    <Info className="w-4 h-4 mr-2 text-blue-500 mt-0.5 shrink-0" />
+                    <p className="line-clamp-2">{bio}</p>
+                  </div>
 
-                  <CardFooter>
-                    <Link href={`/book/${service.id}`} className="w-full">
-                      <Button className="w-full cursor-pointer bg-gray-900 hover:bg-blue-600 transition-colors text-white">
-                        Book Now
+                  <div className="flex justify-between items-center mt-4">
+                    <span className="text-gray-500 text-sm font-medium">
+                      Base Price
+                    </span>
+                    <span className="text-2xl font-bold text-blue-600">
+                      ${profile.pricing || 0}
+                    </span>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase font-bold mb-2 flex items-center">
+                      <Wrench className="w-3 h-3 mr-1" /> Top Skills
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {profile.skills
+                        ?.slice(0, 3)
+                        .map((skill: string, index: number) => (
+                          <span
+                            key={index}
+                            className="bg-blue-50 text-blue-700 border border-blue-100 px-2 py-1 rounded text-xs font-semibold"
+                          >
+                            {skill}
+                          </span>
+                        )) || (
+                        <span className="text-xs text-gray-400">
+                          General Services
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+
+                <CardFooter>
+                  {/* 💡 ৩. Role-Based Booking Button Logic */}
+                  {!userRole ? (
+                    <Link
+                      href={`/login?redirect=/book/${tech.id}`}
+                      className="w-full"
+                    >
+                      <Button className="w-full text-md py-6 cursor-pointer bg-blue-600 hover:bg-blue-700">
+                        Login to Book
                       </Button>
                     </Link>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center p-12 bg-white rounded-xl border border-dashed border-gray-300">
-              <FilterX className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-gray-700">
-                No Services Found
-              </h3>
-              <p className="text-gray-500 mt-2">
-                Try adjusting your filters or search term.
-              </p>
-              <Button
-                onClick={handleClearFilters}
-                variant="outline"
-                className="mt-6 cursor-pointer"
-              >
-                Clear Filters
-              </Button>
-            </div>
-          )}
+                  ) : userRole === "CUSTOMER" ? (
+                    <Link href={`/book/${tech.id}`} className="w-full">
+                      <Button
+                        className={`w-full text-md py-6 cursor-pointer ${isAvailable ? "bg-gray-900 hover:bg-blue-600" : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
+                        disabled={!isAvailable}
+                      >
+                        {isAvailable
+                          ? "Book Technician"
+                          : "Currently Unavailable"}
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button
+                      className="w-full text-md py-6 cursor-not-allowed bg-gray-200 text-gray-500"
+                      disabled
+                    >
+                      Only Customers Can Book
+                    </Button>
+                  )}
+                </CardFooter>
+              </Card>
+            );
+          })}
         </div>
-      </div>
+      ) : (
+        <div className="text-center p-12 bg-white rounded-xl border border-dashed border-gray-300 max-w-2xl mx-auto">
+          <h3 className="text-2xl font-bold text-gray-700">
+            No Technicians Found
+          </h3>
+          <p className="text-gray-500 mt-2">
+            We couldn&apos;t find anyone matching your search.
+          </p>
+          <Button
+            onClick={() => setSearchTerm("")}
+            variant="outline"
+            className="mt-6 cursor-pointer"
+          >
+            Clear Search
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

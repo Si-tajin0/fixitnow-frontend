@@ -51,7 +51,7 @@ export default function HomePage() {
         {isError && (
           <div className="text-center p-8 bg-red-50 rounded-lg">
             <p className="text-red-600 font-medium text-lg">
-              Oops! Couldn&apos;t load services. Please check your backend
+              Oops! Could&apos;t load services. Please check your backend
               connection.
             </p>
           </div>
@@ -68,11 +68,6 @@ export default function HomePage() {
 
         {/* 💡 Service List */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {/*
-            নোট: এখানে any এর বদলে পরে আমরা Type বসাবো,
-            আপাতত তোমার ব্যাকএন্ডের রেসপন্স অনুযায়ী ডেটা দেখাচ্ছি।
-            তোমার ব্যাকএন্ডে সার্ভিসের নাম, দাম (price) আছে ধরে নিচ্ছি।
-          */}
           {services?.map((service: Service) => (
             <Card
               key={service.id}

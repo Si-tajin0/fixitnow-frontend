@@ -1,10 +1,10 @@
 "use server";
 
 import { proxy } from "@/apiFetcher";
-import { cookies } from "next/headers";
-import { jwtDecode } from "jwt-decode";
-import { CustomJwtPayload } from "./auth.sevice";
 import { BookingRequestData, Service } from "@/lib/types";
+import { jwtDecode } from "jwt-decode";
+import { cookies } from "next/headers";
+import { CustomJwtPayload } from "./auth.service";
 
 // get single booking action
 export const getSingleServiceAction = async (

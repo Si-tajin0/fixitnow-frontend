@@ -2,6 +2,7 @@ import { jwtDecode } from "jwt-decode";
 import { cookies } from "next/headers";
 
 export interface CustomJwtPayload {
+  name?: string;
   role: "CUSTOMER" | "TECHNICIAN" | "ADMIN";
   email: string;
   exp: number;

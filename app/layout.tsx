@@ -1,6 +1,6 @@
 import { Navbar } from "@/components/shared/Navbar";
 import AppProvider from "@/providers/AppProvider";
-import { CustomJwtPayload, getCurrentUser } from "@/service/auth.sevice";
+import { CustomJwtPayload, getCurrentUser } from "@/service/auth.service";
 import type { Metadata } from "next";
 import "./globals.css";
 

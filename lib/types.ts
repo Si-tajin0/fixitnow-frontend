@@ -61,3 +61,10 @@ export interface Booking {
   service?: Service;
   technician?: Technician;
 }
+
+export interface CreateServicePayload {
+  name: string;
+  description: string;
+  price: number;
+  categoryId: string;
+}

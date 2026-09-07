@@ -1,4 +1,4 @@
-import { fetchServicesAction } from "@/service/serviceAction";
+import { fetchServicesAction } from "@/service/serviceActions";
 import { useQuery } from "@tanstack/react-query";
 
 export const useServices = () => {

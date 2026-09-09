@@ -4,7 +4,11 @@
 import { proxy } from "@/apiFetcher";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { UpdateTechnicianProfilePayload } from "@/lib/types";
+import {
+  Service,
+  Technician,
+  UpdateTechnicianProfilePayload,
+} from "@/lib/types";
 import { jwtDecode } from "jwt-decode";
 import { CustomJwtPayload } from "./auth.service";
 
@@ -74,14 +78,29 @@ export const updateTechnicianProfileAction = async (
 
 // Get All public technician
 
-export const getAllPublicTechniciansAction = async (searchParams?: string) => {
+export const getAllPublicTechniciansAction = async (
+  searchParams?: string,
+): Promise<Technician[]> => {
   try {
     const query = searchParams ? `?${searchParams}` : "";
 
-    const response = await proxy(`/api/technicians${query}`);
+    const [techRes, serviceRes] = await Promise.all([
+      proxy(`/api/technicians${query}`),
+      proxy(`/api/services`),
+    ]);
 
-    if (!response.ok) return [];
-    return response.data?.data || response.data || [];
+    const allTechnicians: Technician[] =
+      techRes.data?.data || techRes.data || [];
+    const allServices: Service[] =
+      serviceRes.data?.data || serviceRes.data || [];
+
+    const validTechnicians = allTechnicians.filter((tech: Technician) => {
+      return allServices.some(
+        (service: Service) => service.technicianId === tech.id,
+      );
+    });
+
+    return validTechnicians;
   } catch (error) {
     return [];
   }
@@ -98,6 +117,33 @@ export const getMyRoleAction = async () => {
     const decoded = jwtDecode<CustomJwtPayload>(token);
     return decoded.role;
   } catch (error) {
+    return null;
+  }
+};
+
+// get public technician id action
+
+export const getPublicTechnicianByIdAction = async (
+  id: string,
+): Promise<Technician | null> => {
+  try {
+    const response = await proxy(`/api/technicians`);
+
+    if (!response.ok) return null;
+
+    let allTechnicians = response.data?.data || response.data || [];
+
+    if (!Array.isArray(allTechnicians)) {
+      allTechnicians = [];
+    }
+
+    const singleTechnician = allTechnicians.find(
+      (t: Technician) => t.id === id,
+    );
+
+    return singleTechnician || null;
+  } catch (error) {
+    console.error("Action Error:", error);
     return null;
   }
 };

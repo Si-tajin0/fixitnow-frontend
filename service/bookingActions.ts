@@ -1,8 +1,7 @@
-// service/bookingActions.ts
 "use server";
 
 import { proxy } from "@/apiFetcher";
-import { BookingRequestData, Service } from "@/lib/types";
+import { Booking, BookingRequestData, Service, Technician } from "@/lib/types";
 import { jwtDecode } from "jwt-decode";
 import { cookies } from "next/headers";
 
@@ -11,22 +10,32 @@ interface CustomJwtPayload {
   email: string;
 }
 
-// 💡 ম্যাজিক: টেকনিশিয়ানের আইডি দিয়ে তার সার্ভিসটা খুঁজে বের করবে!
 export const getSingleServiceAction = async (
   id: string,
 ): Promise<Service | null> => {
   try {
-    const response = await proxy(`/api/services`);
-    if (!response.ok) return null;
+    const allRes = await proxy(`/api/services`);
+    const allServices: Service[] = allRes.data?.data || allRes.data || [];
 
-    const allServices: Service[] = response.data?.data || response.data || [];
-
-    // 💡 এখানে technicianId অথবা service id দুইটা দিয়েই খোঁজার ব্যবস্থা রাখলাম
     const singleService = allServices.find(
-      (service) => service.technicianId === id || service.id === id,
+      (s: Service) => s.id === id || s.technicianId === id,
     );
 
-    return singleService || null;
+    if (!singleService) return null;
+
+    const techRes = await proxy(`/api/technicians`);
+    const allTechnicians: Technician[] =
+      techRes.data?.data || techRes.data || [];
+
+    const matchingTech = allTechnicians.find(
+      (t: Technician) => t.id === singleService.technicianId,
+    );
+
+    if (matchingTech && matchingTech.technicianProfile?.pricing) {
+      singleService.price = matchingTech.technicianProfile.pricing;
+    }
+
+    return singleService;
   } catch (error) {
     return null;
   }
@@ -71,7 +80,7 @@ export const createBookingAction = async (bookingData: BookingRequestData) => {
 };
 
 // get my booking action
-export const getMyBookingsAction = async () => {
+export const getMyBookingsAction = async (): Promise<Booking[]> => {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("accessToken")?.value;
@@ -82,8 +91,26 @@ export const getMyBookingsAction = async () => {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    if (!response.ok) return [];
-    return response.data?.data || response.data || [];
+    let bookings: Booking[] = response.data?.data || response.data || [];
+
+    const techRes = await proxy(`/api/technicians`);
+    const allTechnicians: Technician[] =
+      techRes.data?.data || techRes.data || [];
+
+    bookings = bookings.map((booking: Booking) => {
+      const matchingTech = allTechnicians.find(
+        (t: Technician) => t.id === booking.technicianId,
+      );
+
+      if (matchingTech && matchingTech.technicianProfile?.pricing) {
+        if (booking.service) {
+          booking.service.price = matchingTech.technicianProfile.pricing;
+        }
+      }
+      return booking;
+    });
+
+    return bookings;
   } catch (error) {
     return [];
   }

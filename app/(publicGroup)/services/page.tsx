@@ -1,4 +1,3 @@
-// app/(publicGroup)/services/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -26,10 +25,9 @@ import {
   getAllPublicTechniciansAction,
   getMyRoleAction,
 } from "@/service/technicianActions";
-import { TechnicianDisplayProfile } from "@/lib/types"; // 💡 any এর বদলে সঠিক টাইপ!
+import { TechnicianDisplayProfile } from "@/lib/types";
 
 export default function PublicTechniciansPage() {
-  // 💡 ১. No any! একদম ১০০% টাইপ-সেফ!
   const [technicians, setTechnicians] = useState<TechnicianDisplayProfile[]>(
     [],
   );
@@ -41,27 +39,29 @@ export default function PublicTechniciansPage() {
     const fetchData = async () => {
       setIsLoading(true);
 
-      // একই সাথে টেকনিশিয়ান লিস্ট এবং ইউজারের রোল আনবো
       const [data, role] = await Promise.all([
         getAllPublicTechniciansAction(),
         getMyRoleAction(),
       ]);
 
-      setTechnicians(data);
+      setTechnicians(data as TechnicianDisplayProfile[]);
       setUserRole(role);
       setIsLoading(false);
     };
     fetchData();
   }, []);
 
-  const filteredTechnicians = technicians.filter((tech) => {
-    const searchLower = searchTerm.toLowerCase();
-    const nameMatch = tech.name?.toLowerCase().includes(searchLower);
-    const skillsMatch = tech.technicianProfile?.skills?.some((skill: string) =>
-      skill.toLowerCase().includes(searchLower),
-    );
-    return nameMatch || skillsMatch;
-  });
+  // 💡 ২. ফিল্টার করার সময়ও টাইপ বলে দেওয়া হলো (tech: TechnicianDisplayProfile)
+  const filteredTechnicians = technicians.filter(
+    (tech: TechnicianDisplayProfile) => {
+      const searchLower = searchTerm.toLowerCase();
+      const nameMatch = tech.name?.toLowerCase().includes(searchLower);
+      const skillsMatch = tech.technicianProfile?.skills?.some(
+        (skill: string) => skill.toLowerCase().includes(searchLower),
+      );
+      return nameMatch || skillsMatch;
+    },
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -96,7 +96,7 @@ export default function PublicTechniciansPage() {
         </div>
       ) : filteredTechnicians.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredTechnicians.map((tech) => {
+          {filteredTechnicians.map((tech: TechnicianDisplayProfile) => {
             const profile = tech.technicianProfile || {
               skills: [],
               experience: 0,
@@ -105,7 +105,6 @@ export default function PublicTechniciansPage() {
             };
             const isAvailable = profile.isAvailable !== false;
 
-            // 💡 ২. Dynamic Bio Generation!
             const bio =
               profile.skills?.length > 0
                 ? `Professional technician with ${profile.experience || 0} years of experience specializing in ${profile.skills.slice(0, 2).join(", ")} and more.`
@@ -141,7 +140,6 @@ export default function PublicTechniciansPage() {
                 </CardHeader>
 
                 <CardContent className="space-y-4 pt-4">
-                  {/* 💡 Dynamic Bio Text */}
                   <div className="text-sm text-gray-600 flex items-start bg-gray-50 p-3 rounded-lg border border-gray-100">
                     <Info className="w-4 h-4 mr-2 text-blue-500 mt-0.5 shrink-0" />
                     <p className="line-clamp-2">{bio}</p>
@@ -179,36 +177,44 @@ export default function PublicTechniciansPage() {
                   </div>
                 </CardContent>
 
-                <CardFooter>
-                  {/* 💡 ৩. Role-Based Booking Button Logic */}
-                  {!userRole ? (
-                    <Link
-                      href={`/login?redirect=/book/${tech.id}`}
-                      className="w-full"
-                    >
-                      <Button className="w-full text-md py-6 cursor-pointer bg-blue-600 hover:bg-blue-700">
-                        Login to Book
-                      </Button>
-                    </Link>
-                  ) : userRole === "CUSTOMER" ? (
-                    <Link href={`/book/${tech.id}`} className="w-full">
+                <CardFooter className="flex flex-col gap-3">
+                  <div className="flex w-full gap-2">
+                    <Link href={`/technicians/${tech.id}`} className="w-1/2">
                       <Button
-                        className={`w-full text-md py-6 cursor-pointer ${isAvailable ? "bg-gray-900 hover:bg-blue-600" : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
-                        disabled={!isAvailable}
+                        variant="outline"
+                        className="w-full cursor-pointer text-blue-600 border-blue-600 hover:bg-blue-50"
                       >
-                        {isAvailable
-                          ? "Book Technician"
-                          : "Currently Unavailable"}
+                        View Profile
                       </Button>
                     </Link>
-                  ) : (
-                    <Button
-                      className="w-full text-md py-6 cursor-not-allowed bg-gray-200 text-gray-500"
-                      disabled
-                    >
-                      Only Customers Can Book
-                    </Button>
-                  )}
+
+                    {!userRole ? (
+                      <Link
+                        href={`/login?redirect=/book/${tech.id}`}
+                        className="w-1/2"
+                      >
+                        <Button className="w-full cursor-pointer bg-blue-600 hover:bg-blue-700">
+                          Login
+                        </Button>
+                      </Link>
+                    ) : userRole === "CUSTOMER" ? (
+                      <Link href={`/book/${tech.id}`} className="w-1/2">
+                        <Button
+                          className={`w-full cursor-pointer ${isAvailable ? "bg-gray-900 hover:bg-gray-800 text-white" : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
+                          disabled={!isAvailable}
+                        >
+                          {isAvailable ? "Book" : "Busy"}
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button
+                        className="w-1/2 cursor-not-allowed bg-gray-200 text-gray-500 text-xs"
+                        disabled
+                      >
+                        Not Allowed
+                      </Button>
+                    )}
+                  </div>
                 </CardFooter>
               </Card>
             );

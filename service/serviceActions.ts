@@ -1,7 +1,7 @@
 "use server";
 
 import { proxy } from "@/apiFetcher";
-import { CreateServicePayload } from "@/lib/types";
+import { CreateServicePayload, Service, Technician } from "@/lib/types";
 import { cookies } from "next/headers";
 
 export const fetchServicesAction = async () => {
@@ -74,14 +74,40 @@ export const createServiceAction = async (
 
 // Get all public service action
 
-export const getAllPublicServicesAction = async (searchParams?: string) => {
+export const getAllPublicServicesAction = async (
+  searchParams?: string,
+): Promise<Service[]> => {
   try {
     const query = searchParams ? `?${searchParams}` : "";
-    const response = await proxy(`/api/services${query}`);
 
-    if (!response.ok) return [];
-    return response.data?.data || response.data || [];
+    console.log("🕵️‍♂️ FETCHING SERVICES URL:", `/api/services${query}`);
+
+    const [servicesRes, techRes] = await Promise.all([
+      proxy(`/api/services${query}`),
+      proxy(`/api/technicians`),
+    ]);
+
+    let services: Service[] = servicesRes.data?.data || servicesRes.data || [];
+    const technicians: Technician[] = techRes.data?.data || techRes.data || [];
+
+    if (!Array.isArray(services)) {
+      return [];
+    }
+
+    services = services.map((service: Service) => {
+      const matchingTech = technicians.find(
+        (t: Technician) => t.id === service.technicianId,
+      );
+
+      if (matchingTech && matchingTech.technicianProfile?.pricing) {
+        service.price = matchingTech.technicianProfile.pricing;
+      }
+      return service;
+    });
+
+    return services;
   } catch (error) {
+    console.error("Action Error:", error);
     return [];
   }
 };

@@ -1,28 +1,70 @@
+// app/(dashboardGroup)/dashboard/customer/page.tsx
 "use client";
 
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import { Star } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import * as z from "zod";
 
 import { useBookings } from "@/hooks/useBookings";
-import { cancelBookingAction } from "@/service/bookingActions"; // 💡
 import { Booking } from "@/lib/types";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { cancelBookingAction } from "@/service/bookingActions";
 import { createPaymentAction } from "@/service/paymentActions";
+import { createReviewAction } from "@/service/reviewActions";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+
+// 💡 Review Zod Schema
+const reviewSchema = z.object({
+  rating: z.string().min(1, "Please select a rating").max(5),
+  comment: z.string().min(5, "Comment must be at least 5 characters"),
+});
+
+type ReviewFormValues = z.infer<typeof reviewSchema>;
 
 export default function CustomerDashboardPage() {
   const { data: bookings, isLoading, isError } = useBookings();
   const queryClient = useQueryClient();
-  const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [payingId, setPayingId] = useState<string | null>(null);
 
-  // cancel function
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  // 💡 Review Modal Control States
+  const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
+  const [isReviewSubmitting, setIsReviewSubmitting] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<ReviewFormValues>({
+    resolver: zodResolver(reviewSchema),
+  });
+
   const handleCancel = async (id: string) => {
     setLoadingId(id);
     const result = await cancelBookingAction(id);
-
     if (result.success) {
       toast.success(result.message);
       queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
@@ -32,17 +74,37 @@ export default function CustomerDashboardPage() {
     setLoadingId(null);
   };
 
-  // Payment handle function
   const handlePayment = async (id: string) => {
-    setPayingId(id);
+    setLoadingId(id);
     const result = await createPaymentAction(id);
-
     if (result.success && result.paymentUrl) {
       window.location.href = result.paymentUrl;
     } else {
       toast.error(result.message);
-      setPayingId(null);
+      setLoadingId(null);
     }
+  };
+
+  const onReviewSubmit = async (data: ReviewFormValues) => {
+    if (!reviewBooking) return;
+    setIsReviewSubmitting(true);
+
+    const payload = {
+      bookingId: reviewBooking.id,
+      rating: Number(data.rating),
+      comment: data.comment,
+    };
+
+    const result = await createReviewAction(payload);
+
+    if (result.success) {
+      toast.success(result.message);
+      setReviewBooking(null);
+      reset();
+    } else {
+      toast.error(result.message);
+    }
+    setIsReviewSubmitting(false);
   };
 
   const getStatusBadge = (status: string) => {
@@ -54,9 +116,9 @@ export default function CustomerDashboardPage() {
       case "PAID":
         return "bg-purple-100 text-purple-800";
       case "IN_PROGRESS":
-        return "bg-green-100 text-green-800";
+        return "bg-orange-100 text-orange-800";
       case "COMPLETED":
-        return "bg-gray-100 text-gray-800";
+        return "bg-green-100 text-green-800";
       case "DECLINED":
       case "CANCELLED":
         return "bg-red-100 text-red-800";
@@ -74,7 +136,6 @@ export default function CustomerDashboardPage() {
           Loading your bookings...
         </div>
       )}
-
       {isError && (
         <div className="text-center text-red-500">Failed to load bookings!</div>
       )}
@@ -90,15 +151,13 @@ export default function CustomerDashboardPage() {
       <div className="grid gap-6">
         {bookings?.map((booking: Booking) => (
           <Card key={booking.id} className="shadow-sm">
-            {/* ... CardHeader আগের মতই থাকবে ... */}
             <CardHeader className="flex flex-row items-center justify-between bg-gray-50 rounded-t-lg pb-4">
               <div>
                 <CardTitle className="text-xl text-blue-600">
                   {booking.service?.name || "Service Details Unavailable"}
                 </CardTitle>
                 <p className="text-sm text-gray-500 mt-1">
-                  Date: {new Date(booking.serviceDate).toLocaleDateString()} |
-                  Time: {booking.scheduledTime}
+                  Date: {booking.serviceDate} | Time: {booking.scheduledTime}
                 </p>
               </div>
               <span
@@ -134,18 +193,20 @@ export default function CustomerDashboardPage() {
                   <Button
                     className="bg-blue-600 hover:bg-blue-700 px-8 cursor-pointer"
                     onClick={() => handlePayment(booking.id)}
-                    disabled={payingId === booking.id}
+                    disabled={loadingId === booking.id}
                   >
-                    {payingId === booking.id ? "Redirecting..." : "Pay Now"}
+                    {loadingId === booking.id ? "Redirecting..." : "Pay Now"}
                   </Button>
                 )}
 
                 {booking.status === "COMPLETED" && (
                   <Button
                     variant="outline"
-                    className="border-blue-600 text-blue-600 hover:bg-blue-50 cursor-pointer"
+                    className="border-green-600 text-green-600 hover:bg-green-50 cursor-pointer"
+                    onClick={() => setReviewBooking(booking)} // 💡 Modal Open হবে
                   >
-                    Leave a Review
+                    <Star className="w-4 h-4 mr-2 fill-current" /> Leave a
+                    Review
                   </Button>
                 )}
               </div>
@@ -153,6 +214,69 @@ export default function CustomerDashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* 💡 The Review Modal */}
+      <Dialog
+        open={!!reviewBooking}
+        onOpenChange={(open) => !open && setReviewBooking(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Leave a Review</DialogTitle>
+            <DialogDescription>
+              Share your experience with{" "}
+              {reviewBooking?.technician?.name || "the technician"}.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={handleSubmit(onReviewSubmit)}
+            className="space-y-4 mt-4"
+          >
+            <div className="space-y-2">
+              <Label>Rating (1-5)</Label>
+              <Select
+                onValueChange={(val) => setValue("rating", val as string)}
+              >
+                <SelectTrigger className="w-full cursor-pointer">
+                  <SelectValue placeholder="Select a rating" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[5, 4, 3, 2, 1].map((num) => (
+                    <SelectItem key={num} value={String(num)}>
+                      {num} -{" "}
+                      {num === 5 ? "Excellent" : num === 1 ? "Poor" : "Stars"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.rating && (
+                <p className="text-sm text-red-500">{errors.rating.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Comment</Label>
+              <Textarea
+                placeholder="Write your feedback here..."
+                className="resize-none"
+                rows={4}
+                {...register("comment")}
+              />
+              {errors.comment && (
+                <p className="text-sm text-red-500">{errors.comment.message}</p>
+              )}
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 cursor-pointer"
+              disabled={isReviewSubmitting}
+            >
+              {isReviewSubmitting ? "Submitting..." : "Submit Review"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

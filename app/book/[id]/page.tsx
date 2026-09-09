@@ -1,7 +1,8 @@
+// app/book/[id]/page.tsx
 "use client";
 
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, CheckCircle2, Star, User } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -29,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { BookingRequestData, Service } from "@/lib/types";
+import { BookingRequestData, Service } from "@/lib/types"; // 💡 টাইপ ইম্পোর্ট
 import { cn } from "@/lib/utils";
 import {
   createBookingAction,
@@ -40,6 +41,7 @@ export default function BookingPage() {
   const params = useParams();
   const router = useRouter();
 
+  // 💡 কোনো any নাই! একদম স্ট্রিক্ট Service টাইপ!
   const [service, setService] = useState<Service | null>(null);
   const [date, setDate] = useState<Date>();
   const [timeSlot, setTimeSlot] = useState<string>("");
@@ -48,6 +50,8 @@ export default function BookingPage() {
 
   useEffect(() => {
     const loadData = async () => {
+      setIsLoading(true);
+      // URL এর ID দিয়ে সার্ভিসটা আনছি (getSingleServiceAction থেকে)
       const fetchedService = await getSingleServiceAction(params.id as string);
       setService(fetchedService);
       setIsLoading(false);
@@ -67,10 +71,11 @@ export default function BookingPage() {
 
     setIsSubmitting(true);
 
+    // 💡 তোমার ব্যাকএন্ডের হুবহু পেলোড (Payload) স্ট্রাকচার!
     const bookingData: BookingRequestData = {
       serviceId: service.id,
       technicianId: service.technicianId,
-      serviceDate: date.toISOString(),
+      serviceDate: format(date, "yyyy-MM-dd"), // "2026-08-30" ফরমেটে যাবে
       scheduledTime: timeSlot,
     };
 
@@ -78,7 +83,7 @@ export default function BookingPage() {
 
     if (result.success) {
       toast.success(result.message);
-      router.push("/dashboard/customer");
+      router.push("/dashboard/customer"); // বুকিং ডান হলে ড্যাশবোর্ডে পাঠাবে
     } else {
       toast.error(result.message);
     }
@@ -94,79 +99,108 @@ export default function BookingPage() {
   if (!service)
     return (
       <div className="text-center mt-20 text-red-500 text-xl">
-        Sorry, no specific service found for this technician!
+        Service not found!
       </div>
     );
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6">
-      <div className="max-w-2xl mx-auto">
-        <Card className="shadow-lg">
-          <CardHeader className="bg-blue-600 text-white rounded-t-xl">
-            <CardTitle className="text-2xl">Confirm Your Booking</CardTitle>
-            <CardDescription className="text-blue-100">
-              Select your preferred date and time.
-            </CardDescription>
+      <div className="max-w-3xl mx-auto">
+        <Card className="shadow-lg border-t-4 border-t-blue-600">
+          <CardHeader className="bg-white rounded-t-xl border-b pb-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-3xl text-gray-900 mb-2">
+                  {service.name}
+                </CardTitle>
+                <CardDescription className="text-gray-500 text-md">
+                  {service.description}
+                </CardDescription>
+              </div>
+              <div className="text-right">
+                <span className="text-3xl font-black text-blue-600">
+                  ${service.price}
+                </span>
+              </div>
+            </div>
           </CardHeader>
 
-          <CardContent className="space-y-6 mt-6">
-            <div className="bg-gray-100 p-4 rounded-lg flex justify-between items-center">
-              <div>
-                <h3 className="font-bold text-lg text-gray-800">
-                  {service.name}
-                </h3>
-                <p className="text-gray-500 text-sm">{service.description}</p>
+          <CardContent className="space-y-8 mt-6">
+            {/* 💡 Technician Details Card */}
+            {service.technician && (
+              <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 flex gap-4 items-center">
+                <div className="bg-white p-3 rounded-full shadow-sm">
+                  <User className="w-8 h-8 text-blue-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">
+                    Assigned Technician
+                  </p>
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-bold text-xl text-gray-800">
+                      {service.technician.name}
+                    </h3>
+                    <div className="flex items-center text-yellow-600 font-bold bg-yellow-100 px-3 py-1 rounded-full text-sm">
+                      <Star className="w-4 h-4 mr-1 fill-current" />{" "}
+                      {service.technician.rating || 0} / 5
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1 flex items-center">
+                    <CheckCircle2 className="w-4 h-4 mr-1 text-green-500" />{" "}
+                    Verified Expert
+                  </p>
+                </div>
               </div>
-              <div className="text-2xl font-extrabold text-blue-600">
-                ${service.price}
+            )}
+
+            {/* Date & Time Selection */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-xl border">
+              <div className="space-y-2">
+                <Label className="font-bold text-gray-700">Select Date</Label>
+                <Popover>
+                  <PopoverTrigger
+                    className={cn(
+                      "w-full justify-start text-left font-normal cursor-pointer py-6",
+                      !date && "text-muted-foreground",
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-5 w-5" />
+                    {date ? (
+                      format(date, "PPP")
+                    ) : (
+                      <span className="text-lg">Pick a date</span>
+                    )}
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      disabled={(d) => d < new Date()}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label>Select Date</Label>
-              <Popover>
-                <PopoverTrigger
-                  className={cn(
-                    "inline-flex h-10 w-full items-center justify-start rounded-md border border-input bg-background px-3 py-2 text-left text-sm font-normal ring-offset-background cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                    !date && "text-muted-foreground",
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP") : <span>Pick a date</span>}
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    disabled={(d) => d < new Date()}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Select Time Slot</Label>
-              <Select onValueChange={(value) => setTimeSlot(String(value))}>
-                <SelectTrigger className="w-full cursor-pointer">
-                  <SelectValue placeholder="Choose a time" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Morning (9 AM - 12 PM)">
-                    Morning (9 AM - 12 PM)
-                  </SelectItem>
-                  <SelectItem value="Afternoon (1 PM - 4 PM)">
-                    Afternoon (1 PM - 4 PM)
-                  </SelectItem>
-                  <SelectItem value="Evening (5 PM - 8 PM)">
-                    Evening (5 PM - 8 PM)
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label className="font-bold text-gray-700">
+                  Select Time Slot
+                </Label>
+                <Select onValueChange={(value) => setTimeSlot(String(value))}>
+                  <SelectTrigger className="w-full cursor-pointer py-6 text-lg">
+                    <SelectValue placeholder="Choose a time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10:00 AM">10:00 AM</SelectItem>
+                    <SelectItem value="1:00 PM">1:00 PM</SelectItem>
+                    <SelectItem value="4:00 PM">4:00 PM</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <Button
-              className="w-full cursor-pointer bg-blue-600 hover:bg-blue-700 text-lg py-6"
+              className="w-full cursor-pointer bg-blue-600 hover:bg-blue-700 text-xl py-8 shadow-lg"
               onClick={handleBooking}
               disabled={isSubmitting}
             >

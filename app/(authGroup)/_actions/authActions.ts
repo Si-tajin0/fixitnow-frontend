@@ -1,88 +1,113 @@
 "use server";
 
 import { proxy } from "@/apiFetcher";
-import { LoginData, RegisterData } from "@/lib/types";
+import { BackendRegisterPayload, LoginData, RegisterData } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
 // Login user
-export async function loginUserAction(fromData: LoginData) {
+export const loginUserAction = async (formData: LoginData) => {
   try {
     const response = await proxy("/api/auth/login", {
       method: "POST",
-      body: JSON.stringify(fromData),
+      body: JSON.stringify(formData),
     });
 
     if (!response.ok) {
-      return {
-        success: false,
-        message: response.data?.message || "Login Failed",
-      };
+      let errorMsg = response.data?.message || "Login failed!";
+      if (
+        errorMsg.includes("Prisma") ||
+        errorMsg.includes("findUnique") ||
+        errorMsg.length > 50
+      ) {
+        errorMsg = "Invalid email or password. Please try again!";
+      }
+      return { success: false, message: errorMsg };
     }
+
     const token = response.data?.data?.accessToken;
 
     if (token) {
+      // 🛡️ Strict Ban Check
+      const meRes = await proxy("/api/auth/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const userData =
+        meRes.data?.profile || meRes.data?.data || meRes.data || {};
+
+      if (
+        userData?.status?.toUpperCase() === "BLOCKED" ||
+        userData?.status?.toUpperCase() === "BANNED"
+      ) {
+        return {
+          success: false,
+          message: "🚨 Your account has been BLOCKED by the Admin!",
+        };
+      }
+
       const cookieStore = await cookies();
       cookieStore.set("accessToken", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         path: "/",
-        maxAge: 60 * 60 * 24,
+        maxAge: 60 * 60 * 24 * 7,
       });
     }
 
     revalidatePath("/");
     revalidatePath("/dashboard");
 
-    return {
-      success: true,
-      message: "Login Successfull!",
-      data: response.data,
-    };
+    return { success: true, message: "Login Successful!", data: response.data };
   } catch (error) {
-    return {
-      success: false,
-      message: "Something went wrong!",
-    };
+    return { success: false, message: "Something went wrong!" };
   }
-}
+};
 
-// Register
-
-export const registerUserAction = async (fromData: RegisterData) => {
+export const registerUserAction = async (formData: RegisterData) => {
   try {
+    const payload: BackendRegisterPayload = {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      role: formData.role,
+      phone: formData.phone || "",
+      address: formData.address || "",
+    };
+
+    if (formData.role === "TECHNICIAN") {
+      payload.technicianProfile = {
+        skills: formData.skills
+          ? formData.skills
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [],
+        experience: Number(formData.experience) || 0,
+        pricing: Number(formData.pricing) || 0,
+      };
+    }
+
     const response = await proxy("/api/auth/register", {
       method: "POST",
-      body: JSON.stringify(fromData),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
       return {
         success: false,
-        message: response.data?.message || "Register Failed!",
+        message: response.data?.message || "Registration failed!",
       };
     }
 
-    revalidatePath("/");
-    revalidatePath("/dashboard");
-    return {
-      success: true,
-      message: "Register Successful! Please Login.",
-      data: response.data,
-    };
+    return { success: true, message: "Registration Successful! Please login." };
   } catch (error) {
-    return { success: false, messsage: "Something went Wrong!" };
+    return { success: false, message: "Something went wrong!" };
   }
 };
 
-// Logout action
-
 export const logoutUserAction = async () => {
   const cookieStore = await cookies();
-  cookieStore.delete("accessToken"); // কুকি ডিলিট করে দিলাম
-
-  // clear the cash
+  cookieStore.delete("accessToken");
   revalidatePath("/");
-
   return { success: true };
 };

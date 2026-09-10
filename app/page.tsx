@@ -1,11 +1,34 @@
-// app/page.tsx
-"use client";
-
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Clock, Wrench, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cookies } from "next/headers";
+import { jwtDecode } from "jwt-decode";
 
-export default function HomePage() {
+interface CustomJwtPayload {
+  role?: "CUSTOMER" | "TECHNICIAN" | "ADMIN";
+  email?: string;
+  [key: string]: unknown;
+}
+
+const HomePage = async () => {
+  // 💡 সার্ভার থেকে কুকি রিড করছি
+  const cookieStore = await cookies();
+  const token = cookieStore.get("accessToken")?.value;
+
+  let userRole: "CUSTOMER" | "TECHNICIAN" | "ADMIN" | null = null;
+
+  // 💡 টোকেন থাকলে ডিকোড করে রোলটা বের করছি
+  if (token) {
+    try {
+      const decoded = jwtDecode<CustomJwtPayload>(token);
+      if (decoded.role) {
+        userRole = decoded.role;
+      }
+    } catch (error) {
+      console.error("Invalid token");
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* 💡 Hero Section */}
@@ -20,19 +43,57 @@ export default function HomePage() {
             hassle-free! Don&apos;t wait, fix it now.
           </p>
           <div className="flex justify-center gap-4 pt-4">
-            <Link href="/services">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6 rounded-full shadow-lg cursor-pointer">
-                Explore Services <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button
-                variant="outline"
-                className="text-lg px-8 py-6 rounded-full bg-white text-blue-600 border-blue-200 hover:bg-blue-50 cursor-pointer"
-              >
-                Join as Technician
-              </Button>
-            </Link>
+            {!userRole && (
+              <>
+                <Link href="/services">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6 rounded-full shadow-lg cursor-pointer">
+                    Explore Services <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button
+                    variant="outline"
+                    className="text-lg px-8 py-6 rounded-full bg-white text-blue-600 border-blue-200 hover:bg-blue-50 cursor-pointer"
+                  >
+                    Join as Technician
+                  </Button>
+                </Link>
+              </>
+            )}
+
+            {userRole === "CUSTOMER" && (
+              <>
+                <Link href="/services">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6 rounded-full shadow-lg cursor-pointer">
+                    Book a Service <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </Link>
+                <Link href="/dashboard/customer">
+                  <Button
+                    variant="outline"
+                    className="text-lg px-8 py-6 rounded-full bg-white text-blue-600 border-blue-200 hover:bg-blue-50 cursor-pointer"
+                  >
+                    My Dashboard
+                  </Button>
+                </Link>
+              </>
+            )}
+
+            {userRole === "TECHNICIAN" && (
+              <Link href="/dashboard/technician">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6 rounded-full shadow-lg cursor-pointer">
+                  Technician Dashboard <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+            )}
+
+            {userRole === "ADMIN" && (
+              <Link href="/dashboard/admin">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6 rounded-full shadow-lg cursor-pointer">
+                  Admin Dashboard <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -121,4 +182,6 @@ export default function HomePage() {
       </section>
     </div>
   );
-}
+};
+
+export default HomePage;

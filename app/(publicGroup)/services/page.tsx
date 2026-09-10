@@ -1,18 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
 import {
-  Search,
   CheckCircle2,
-  XCircle,
+  Info,
+  Search,
   Star,
   Wrench,
-  Info,
+  XCircle,
 } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -20,12 +19,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
+import { TechnicianDisplayProfile } from "@/lib/types";
 import {
   getAllPublicTechniciansAction,
   getMyRoleAction,
 } from "@/service/technicianActions";
-import { TechnicianDisplayProfile } from "@/lib/types";
 
 export default function PublicTechniciansPage() {
   const [technicians, setTechnicians] = useState<TechnicianDisplayProfile[]>(
@@ -51,7 +51,6 @@ export default function PublicTechniciansPage() {
     fetchData();
   }, []);
 
-  // 💡 ২. ফিল্টার করার সময়ও টাইপ বলে দেওয়া হলো (tech: TechnicianDisplayProfile)
   const filteredTechnicians = technicians.filter(
     (tech: TechnicianDisplayProfile) => {
       const searchLower = searchTerm.toLowerCase();
@@ -59,7 +58,16 @@ export default function PublicTechniciansPage() {
       const skillsMatch = tech.technicianProfile?.skills?.some(
         (skill: string) => skill.toLowerCase().includes(searchLower),
       );
-      return nameMatch || skillsMatch;
+      const locationMatch = tech.address?.toLowerCase().includes(searchLower);
+      let priceMatch = false;
+      const searchNumber = Number(searchLower);
+
+      if (!isNaN(searchNumber) && searchLower !== "") {
+        const techPrice = tech.technicianProfile?.pricing || 0;
+        priceMatch = techPrice <= searchNumber;
+      }
+
+      return nameMatch || skillsMatch || priceMatch || locationMatch;
     },
   );
 

@@ -8,7 +8,8 @@ import {
   Settings,
   Users,
   Briefcase,
-  CalendarCheck,
+  Wrench,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,10 +20,14 @@ type SidebarProps = {
 export const Sidebar = ({ role }: SidebarProps) => {
   const pathname = usePathname();
 
-  // 💡 রোল অনুযায়ী মেন্যু আইটেম ডিফাইন করলাম
   const menuItems = {
     CUSTOMER: [
       { name: "My Bookings", href: "/dashboard/customer", icon: History },
+      {
+        name: "Payment History",
+        href: "/dashboard/customer/payments",
+        icon: CreditCard,
+      },
       {
         name: "Profile Settings",
         href: "/dashboard/customer/profile",
@@ -32,14 +37,14 @@ export const Sidebar = ({ role }: SidebarProps) => {
     TECHNICIAN: [
       { name: "Job Requests", href: "/dashboard/technician", icon: Briefcase },
       {
-        name: "My Schedule",
-        href: "/dashboard/technician/schedule",
-        icon: CalendarCheck,
-      },
-      {
         name: "Profile Settings",
         href: "/dashboard/technician/profile",
         icon: Settings,
+      },
+      {
+        name: "Manage Services",
+        href: "/dashboard/technician/services",
+        icon: Wrench,
       },
     ],
     ADMIN: [
@@ -49,6 +54,11 @@ export const Sidebar = ({ role }: SidebarProps) => {
         name: "Categories",
         href: "/dashboard/admin/categories",
         icon: Briefcase,
+      },
+      {
+        name: "All Services",
+        href: "/dashboard/admin/services",
+        icon: Wrench,
       },
     ],
   };

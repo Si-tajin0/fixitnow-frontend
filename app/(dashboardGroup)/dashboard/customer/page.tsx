@@ -1,22 +1,22 @@
 // app/(dashboardGroup)/dashboard/customer/page.tsx
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
-import { Star } from "lucide-react";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import toast from "react-hot-toast";
+import { Star, LayoutList } from "lucide-react";
 
 import { useBookings } from "@/hooks/useBookings";
-import { Booking } from "@/lib/types";
 import { cancelBookingAction } from "@/service/bookingActions";
 import { createPaymentAction } from "@/service/paymentActions";
 import { createReviewAction } from "@/service/reviewActions";
+import { Booking } from "@/lib/types";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -32,11 +33,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 
-// 💡 Review Zod Schema
 const reviewSchema = z.object({
-  rating: z.string().min(1, "Please select a rating").max(5),
+  rating: z.string().min(1, "Please select a rating"),
   comment: z.string().min(5, "Comment must be at least 5 characters"),
 });
 
@@ -47,8 +46,6 @@ export default function CustomerDashboardPage() {
   const queryClient = useQueryClient();
 
   const [loadingId, setLoadingId] = useState<string | null>(null);
-
-  // 💡 Review Modal Control States
   const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
   const [isReviewSubmitting, setIsReviewSubmitting] = useState(false);
 
@@ -128,8 +125,10 @@ export default function CustomerDashboardPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">My Bookings 🛠️</h1>
+    <div className="max-w-7xl mx-auto pb-12">
+      <h1 className="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+        <LayoutList className="mr-3 text-blue-600" /> My Bookings
+      </h1>
 
       {isLoading && (
         <div className="text-center text-lg font-medium animate-pulse">
@@ -141,7 +140,7 @@ export default function CustomerDashboardPage() {
       )}
 
       {!isLoading && bookings?.length === 0 && (
-        <div className="text-center bg-white p-8 rounded-lg shadow-sm border">
+        <div className="text-center bg-white p-12 rounded-xl shadow-sm border border-dashed border-gray-300">
           <p className="text-gray-500 text-lg">
             You haven&apos;t booked any services yet.
           </p>
@@ -150,18 +149,21 @@ export default function CustomerDashboardPage() {
 
       <div className="grid gap-6">
         {bookings?.map((booking: Booking) => (
-          <Card key={booking.id} className="shadow-sm">
+          <Card
+            key={booking.id}
+            className="shadow-sm border-t-4 border-t-blue-500"
+          >
             <CardHeader className="flex flex-row items-center justify-between bg-gray-50 rounded-t-lg pb-4">
               <div>
-                <CardTitle className="text-xl text-blue-600">
+                <CardTitle className="text-xl text-gray-800">
                   {booking.service?.name || "Service Details Unavailable"}
                 </CardTitle>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-500 mt-1 font-medium">
                   Date: {booking.serviceDate} | Time: {booking.scheduledTime}
                 </p>
               </div>
               <span
-                className={`px-4 py-1.5 rounded-full text-sm font-semibold ${getStatusBadge(booking.status)}`}
+                className={`px-4 py-1.5 rounded-full text-sm font-bold ${getStatusBadge(booking.status)}`}
               >
                 {booking.status}
               </span>
@@ -169,10 +171,13 @@ export default function CustomerDashboardPage() {
 
             <CardContent className="pt-6 flex justify-between items-center">
               <div>
-                <p className="text-gray-700 font-medium">
-                  Technician: {booking.technician?.name || "Pending..."}
+                <p className="text-gray-600 font-medium">
+                  Technician:{" "}
+                  <span className="text-gray-900 font-bold">
+                    {booking.technician?.name || "Pending..."}
+                  </span>
                 </p>
-                <p className="text-2xl font-bold text-gray-900 mt-2">
+                <p className="text-3xl font-black text-blue-600 mt-2">
                   ${booking.service?.price || 0}
                 </p>
               </div>
@@ -191,7 +196,7 @@ export default function CustomerDashboardPage() {
 
                 {booking.status === "ACCEPTED" && (
                   <Button
-                    className="bg-blue-600 hover:bg-blue-700 px-8 cursor-pointer"
+                    className="bg-blue-600 hover:bg-blue-700 px-8 cursor-pointer shadow-md"
                     onClick={() => handlePayment(booking.id)}
                     disabled={loadingId === booking.id}
                   >
@@ -202,8 +207,8 @@ export default function CustomerDashboardPage() {
                 {booking.status === "COMPLETED" && (
                   <Button
                     variant="outline"
-                    className="border-green-600 text-green-600 hover:bg-green-50 cursor-pointer"
-                    onClick={() => setReviewBooking(booking)} // 💡 Modal Open হবে
+                    className="border-green-600 text-green-600 hover:bg-green-50 cursor-pointer shadow-sm"
+                    onClick={() => setReviewBooking(booking)}
                   >
                     <Star className="w-4 h-4 mr-2 fill-current" /> Leave a
                     Review
@@ -215,7 +220,6 @@ export default function CustomerDashboardPage() {
         ))}
       </div>
 
-      {/* 💡 The Review Modal */}
       <Dialog
         open={!!reviewBooking}
         onOpenChange={(open) => !open && setReviewBooking(null)}
@@ -237,7 +241,7 @@ export default function CustomerDashboardPage() {
               <Select
                 onValueChange={(val) => setValue("rating", val as string)}
               >
-                <SelectTrigger className="w-full cursor-pointer">
+                <SelectTrigger className="w-full cursor-pointer py-6">
                   <SelectValue placeholder="Select a rating" />
                 </SelectTrigger>
                 <SelectContent>
@@ -269,7 +273,7 @@ export default function CustomerDashboardPage() {
 
             <Button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 cursor-pointer"
+              className="w-full bg-blue-600 hover:bg-blue-700 cursor-pointer text-lg py-6"
               disabled={isReviewSubmitting}
             >
               {isReviewSubmitting ? "Submitting..." : "Submit Review"}

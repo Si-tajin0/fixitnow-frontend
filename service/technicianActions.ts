@@ -1,10 +1,10 @@
-// service/technicianActions.ts
 "use server";
 
 import { proxy } from "@/apiFetcher";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import {
+  CreateServicePayload,
   Service,
   Technician,
   UpdateTechnicianProfilePayload,
@@ -26,23 +26,20 @@ export const getTechnicianProfileAction = async () => {
     const rawUserData = userResponse.data?.data || userResponse.data || {};
     const userData = rawUserData.profile || rawUserData;
 
-    if (!userData.id) {
-      console.error("User ID not found!", userData);
-      return userData;
-    }
+    if (!userData.id) return userData;
 
-    const techResponse = await proxy(`/api/technicians/${userData.id}`);
+    const techResponse = await proxy(`/api/technicians`);
+    const allTechnicians = techResponse.data?.data || techResponse.data || [];
 
-    const fullTechData = techResponse.data?.data || techResponse.data || {};
+    const myTechProfile = allTechnicians.find(
+      (t: Technician) => t.id === userData.id,
+    );
 
-    const finalData = {
+    return {
       ...userData,
-      technicianProfile: fullTechData.technicianProfile || null,
+      technicianProfile: myTechProfile?.technicianProfile || null,
     };
-
-    return finalData;
   } catch (error) {
-    console.error("Action Error:", error);
     return null;
   }
 };

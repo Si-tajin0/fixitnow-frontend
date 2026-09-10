@@ -152,3 +152,9 @@ export interface Review {
     };
   };
 }
+
+export interface UpdateAdminPayload {
+  name: string;
+  phone: string;
+  address: string;
+}

@@ -15,10 +15,18 @@ export const loginUserAction = async (formData: LoginData) => {
 
     if (!response.ok) {
       let errorMsg = response.data?.message || "Login failed!";
+
+      if (
+        errorMsg.toLowerCase().includes("block") ||
+        errorMsg.toLowerCase().includes("ban")
+      ) {
+        return { success: false, message: `🚨 Access Denied: ${errorMsg}` };
+      }
+
       if (
         errorMsg.includes("Prisma") ||
         errorMsg.includes("findUnique") ||
-        errorMsg.length > 50
+        errorMsg.length > 60
       ) {
         errorMsg = "Invalid email or password. Please try again!";
       }
@@ -28,23 +36,6 @@ export const loginUserAction = async (formData: LoginData) => {
     const token = response.data?.data?.accessToken;
 
     if (token) {
-      // 🛡️ Strict Ban Check
-      const meRes = await proxy("/api/auth/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const userData =
-        meRes.data?.profile || meRes.data?.data || meRes.data || {};
-
-      if (
-        userData?.status?.toUpperCase() === "BLOCKED" ||
-        userData?.status?.toUpperCase() === "BANNED"
-      ) {
-        return {
-          success: false,
-          message: "🚨 Your account has been BLOCKED by the Admin!",
-        };
-      }
-
       const cookieStore = await cookies();
       cookieStore.set("accessToken", token, {
         httpOnly: true,
@@ -62,6 +53,8 @@ export const loginUserAction = async (formData: LoginData) => {
     return { success: false, message: "Something went wrong!" };
   }
 };
+
+// Register user
 
 export const registerUserAction = async (formData: RegisterData) => {
   try {

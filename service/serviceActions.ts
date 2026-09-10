@@ -1,7 +1,13 @@
 "use server";
 
 import { proxy } from "@/apiFetcher";
-import { CreateServicePayload, Service, Technician } from "@/lib/types";
+import {
+  Category,
+  CreateServicePayload,
+  Service,
+  Technician,
+} from "@/lib/types";
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
 export const fetchServicesAction = async () => {
@@ -23,20 +29,33 @@ export const fetchServicesAction = async () => {
 
 export const getCategoriesAction = async () => {
   try {
-    const cookieStroe = await cookies();
-    const token = cookieStroe.get("accessToken")?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get("accessToken")?.value;
 
-    const response = await proxy("/api/admin/categories", {
-      method: "GET",
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+    const response = await proxy("/api/categories", {
+      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
     });
 
-    console.log("Category Fetch Response:", response);
-    if (!response.ok) return [];
-    return response.data?.data || response.data || [];
+    if (response.ok && response.data?.data) {
+      return response.data.data;
+    }
+
+    const serviceRes = await proxy("/api/services");
+    const allServices = serviceRes.data?.data || serviceRes.data || [];
+
+    const uniqueCategories: Category[] = [];
+    const catMap = new Map();
+
+    allServices.forEach((s: Service) => {
+      if (s.category && !catMap.has(s.category.id)) {
+        catMap.set(s.category.id, true);
+        uniqueCategories.push(s.category);
+      }
+    });
+
+    return uniqueCategories;
   } catch (error) {
+    console.error("Error fetching categories:", error);
     return [];
   }
 };
@@ -51,10 +70,11 @@ export const createServiceAction = async (
 
     if (!token) return { success: false, message: "Unauthorized" };
 
-    const response = await proxy("/api/admin/categories", {
+    const response = await proxy("/api/services", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(serviceData),
     });
@@ -65,6 +85,9 @@ export const createServiceAction = async (
         message: response.data?.message || "Failed to create service",
       };
     }
+
+    revalidatePath("/dashboard/technician/services");
+    revalidatePath("/services");
 
     return { success: true, message: "Service created successfully!" };
   } catch (error) {

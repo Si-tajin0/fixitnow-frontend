@@ -65,12 +65,17 @@ export const Navbar = ({ user }: UserProps) => {
             >
               Home
             </Link>
-            <Link
-              href="/services"
-              className="text-gray-600 hover:text-blue-600 font-medium transition-colors"
-            >
-              Services
-            </Link>
+
+            {/* technician profile service hide  */}
+
+            {user?.role !== "TECHNICIAN" && (
+              <Link
+                href="/services"
+                className="text-gray-600 hover:text-blue-600 font-medium transition-colors"
+              >
+                Services
+              </Link>
+            )}
           </div>
 
           <div className="flex items-center space-x-4">

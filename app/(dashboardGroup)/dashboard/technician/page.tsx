@@ -73,7 +73,6 @@ const TechnicianDashboardPage = () => {
       <div className="grid gap-6">
         {bookings?.map((booking: Booking) => (
           <Card key={booking.id} className="shadow-sm">
-            {/* ... (আগের কার্ডের ভেতরের বাকি কোড হুবহু সেম থাকবে) ... */}
             <CardHeader className="flex flex-row items-center justify-between bg-gray-50 rounded-t-lg pb-4">
               <div>
                 <CardTitle className="text-xl text-blue-600">

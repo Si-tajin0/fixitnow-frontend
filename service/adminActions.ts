@@ -1,7 +1,7 @@
 "use server";
 
 import { proxy } from "@/apiFetcher";
-import { User } from "@/lib/types";
+import { UpdateAdminPayload, User } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
@@ -92,6 +92,60 @@ export const updateUserStatusAction = async (
     }
 
     return { success: true, message: `User successfully marked as ${status}!` };
+  } catch (error) {
+    return { success: false, message: "Something went wrong!" };
+  }
+};
+
+//  Get Admin my profile
+export const getAdminProfileAction = async () => {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("accessToken")?.value;
+    if (!token) return null;
+
+    const response = await proxy("/api/auth/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) return null;
+
+    const rawData = response.data?.data || response.data || {};
+    const finalData = rawData.profile || rawData;
+
+    return finalData;
+  } catch (error) {
+    return null;
+  }
+};
+
+// 💡 updated admin profile
+export const updateAdminProfileAction = async (
+  profileData: UpdateAdminPayload,
+) => {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("accessToken")?.value;
+    if (!token) return { success: false, message: "Unauthorized" };
+
+    const response = await proxy(`/api/users/update-profile`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(profileData),
+    });
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: response.data?.message || "Failed to update profile!",
+      };
+    }
+
+    revalidatePath("/dashboard/admin/profile");
+    return { success: true, message: "Admin Profile updated successfully!" };
   } catch (error) {
     return { success: false, message: "Something went wrong!" };
   }

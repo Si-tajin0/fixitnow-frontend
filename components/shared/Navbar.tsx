@@ -9,6 +9,7 @@ import { logoutUserAction } from "@/app/(authGroup)/_actions/authActions";
 import { Button } from "@/components/ui/button";
 import { CustomJwtPayload } from "@/service/auth.service";
 import { LayoutDashboard, LogOut, User } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 type UserProps = {
   user: CustomJwtPayload | null;
@@ -16,12 +17,15 @@ type UserProps = {
 
 export const Navbar = ({ user }: UserProps) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
     await logoutUserAction();
+    queryClient.clear();
+
     toast.success("Logged out successfully!");
     router.push("/login");
     router.refresh();

@@ -3,18 +3,8 @@
 > **Your Trusted Home Service Platform**
 > A modern, responsive, and full-stack home service marketplace where customers can find and book top-rated technicians, and technicians can manage their service gigs seamlessly.
 
-🔗 **Live URL:** [Insert your Vercel Link Here]
-🔗 **Backend API URL:** [Insert your Backend Link Here]
-🎥 **Demo Video:** [Insert your Video Link Here]
-
----
-
-## 🔑 Admin Credentials (For Testing)
-
-As per the assignment requirements, use the following credentials to test the Admin features:
-
-- **Email:** `admin@fixitnow.com` _(Change to your actual admin email)_
-- **Password:** `admin123` _(Change to your actual admin password)_
+🔗 **Live URL:** [(https://fixitnow-frontend-rose.vercel.app/)]
+🔗 **Backend API URL:** [(https://fixitnow-backend-assignment4.vercel.app)]
 
 ---
 

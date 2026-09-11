@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛠️ FixItNow - Frontend Application
 
-## Getting Started
+> **Your Trusted Home Service Platform**
+> A modern, responsive, and full-stack home service marketplace where customers can find and book top-rated technicians, and technicians can manage their service gigs seamlessly.
 
-First, run the development server:
+🔗 **Live URL:** [Insert your Vercel Link Here]
+🔗 **Backend API URL:** [Insert your Backend Link Here]
+🎥 **Demo Video:** [Insert your Video Link Here]
+
+---
+
+## 🔑 Admin Credentials (For Testing)
+
+As per the assignment requirements, use the following credentials to test the Admin features:
+
+- **Email:** `admin@fixitnow.com` _(Change to your actual admin email)_
+- **Password:** `admin123` _(Change to your actual admin password)_
+
+---
+
+## 🚀 Tech Stack Used
+
+This project is built with the latest industry standards and modern web technologies:
+
+- **Framework:** Next.js 15 (App Router)
+- **Language:** TypeScript (Strict Mode, 100% Type-Safe)
+- **Styling:** Tailwind CSS v4 & Shadcn UI
+- **Data Fetching & State:** TanStack React Query & Next.js Server Actions
+- **Forms & Validation:** React Hook Form & Zod
+- **Payment Gateway:** Stripe Checkout Integration
+- **Icons & UI:** Lucide React, React Hot Toast
+
+---
+
+## 🌟 Key Features
+
+### 👤 1. Customer Features
+
+- **Browse & Filter:** Real-time search and filter services by category, price range, and technician skills.
+- **Dynamic Booking:** Select preferred Date (Shadcn Calendar) and Time slots to book a service.
+- **Secure Payment:** Pay for accepted bookings using **Stripe Payment Gateway** with dynamic success/cancel redirects.
+- **Review System:** Leave a 1-5 star rating and feedback for completed jobs.
+- **Dashboard:** Track booking statuses (`REQUESTED`, `ACCEPTED`, `PAID`, `COMPLETED`, `CANCELLED`).
+
+### 🧑‍🔧 2. Technician Features
+
+- **Service Management:** Create specific service gigs based on Admin categories.
+- **Profile & Availability:** Manage skills, base pricing, experience, and toggle real-time availability.
+- **Job Requests:** Accept or Decline incoming service requests from customers.
+- **Job Status Tracking:** Mark jobs as `IN_PROGRESS` and `COMPLETED`.
+
+### 👑 3. Admin Features
+
+- **User Management:** View all registered users and **Ban/Unban (Block/Active)** users directly from the dashboard.
+- **Category Management:** Create and manage global service categories for technicians to use.
+- **Platform Monitoring:** Read-only access to all services active on the platform.
+
+---
+
+## 🛡️ Security & Architecture (BFF Pattern)
+
+- **Backend For Frontend (BFF):** We used a centralized proxy (`apiFetcher.ts`) combined with **Next.js Server Actions**. This prevents CORS issues and hides backend APIs from the browser's network tab.
+- **JWT Middleware:** Role-based route protection (`/dashboard/*` and `/book/*`) using `middleware.ts` to ensure only authorized users access specific pages. Banned users are strictly kicked out during the login action.
+- **Error Handling:** Implemented global `<Toaster/>`, customized 404 Not Found pages, and Zod schema validations for robust error boundaries.
+
+---
+
+## ⚙️ Getting Started (Local Setup)
+
+To run this project locally, follow these steps:
+
+### 1. Clone the repository
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+git clone https://github.com/your-username/fixitnow-frontend.git
+cd fixitnow-frontend
+2. Install dependencies
+(We recommend using pnpm for faster installation)
+code
+Bash
+pnpm install
+3. Setup Environment Variables
+Create a .env.local file in the root directory and add your backend API URL:
+code
+Env
+NEXT_PUBLIC_API_URL=https://your-backend-url.vercel.app/api
+4. Run the development server
+code
+Bash
 pnpm dev
-# or
-bun dev
+Open http://localhost:3000 with your browser to see the result.
+Developed with ❤️ as part of the Final Frontend Assignment.
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

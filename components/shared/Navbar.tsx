@@ -1,4 +1,3 @@
-// components/shared/Navbar.tsx
 "use client";
 
 import Link from "next/link";
@@ -81,7 +80,7 @@ export const Navbar = ({ user }: UserProps) => {
           <div className="flex items-center space-x-4">
             {user ? (
               <div className="relative" ref={dropdownRef}>
-                {/* 💡 Avatar Button */}
+                {/*  Avatar Button */}
                 <button
                   onClick={() => setIsOpen(!isOpen)}
                   className="outline-none border-none bg-blue-600 text-white font-bold h-10 w-10 flex items-center justify-center rounded-full ring-2 ring-blue-100 hover:ring-blue-300 transition-all cursor-pointer shadow-sm"

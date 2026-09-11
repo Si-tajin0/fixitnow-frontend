@@ -1,4 +1,3 @@
-// service/customerActions.ts
 "use server";
 
 import { proxy } from "@/apiFetcher";
@@ -30,7 +29,6 @@ export const getCustomerProfileAction = async () => {
   }
 };
 
-// 💡 userId প্যারামিটার রিমুভ করে দিলাম, শুধু পেলোড নিবে
 export const updateCustomerProfileAction = async (
   profileData: UpdateCustomerPayload,
 ) => {

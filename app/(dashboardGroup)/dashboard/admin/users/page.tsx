@@ -1,4 +1,3 @@
-// app/(dashboardGroup)/dashboard/admin/users/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -34,13 +33,11 @@ export default function AdminUsersPage() {
   const queryClient = useQueryClient();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  // 💡 React Query দিয়ে ইউজারদের ফেচ করা
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => await getAllUsersAction(),
   });
 
-  // 💡 Ban / Unban ফাংশন
   const handleStatusChange = async (userId: string, currentStatus: string) => {
     setLoadingId(userId);
     const newStatus = currentStatus === "ACTIVE" ? "BLOCKED" : "ACTIVE";
@@ -49,7 +46,7 @@ export default function AdminUsersPage() {
 
     if (result.success) {
       toast.success(result.message);
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] }); // লিস্ট রিলোড হবে
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     } else {
       toast.error(result.message);
     }
@@ -117,7 +114,7 @@ export default function AdminUsersPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        {/* 💡 অ্যাডমিন নিজে নিজেকে ব্লক করতে পারবে না! */}
+                        {/* Admin herself not block condition*/}
                         {user.role === "ADMIN" ? (
                           <span className="text-xs text-gray-400 font-medium">
                             System Admin

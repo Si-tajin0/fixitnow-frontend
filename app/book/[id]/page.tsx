@@ -1,4 +1,3 @@
-// app/book/[id]/page.tsx
 "use client";
 
 import { format } from "date-fns";
@@ -30,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { BookingRequestData, Service } from "@/lib/types"; // 💡 টাইপ ইম্পোর্ট
+import { BookingRequestData, Service } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
   createBookingAction,
@@ -41,7 +40,6 @@ export default function BookingPage() {
   const params = useParams();
   const router = useRouter();
 
-  // 💡 কোনো any নাই! একদম স্ট্রিক্ট Service টাইপ!
   const [service, setService] = useState<Service | null>(null);
   const [date, setDate] = useState<Date>();
   const [timeSlot, setTimeSlot] = useState<string>("");
@@ -51,7 +49,7 @@ export default function BookingPage() {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      // URL এর ID দিয়ে সার্ভিসটা আনছি (getSingleServiceAction থেকে)
+
       const fetchedService = await getSingleServiceAction(params.id as string);
       setService(fetchedService);
       setIsLoading(false);
@@ -71,11 +69,10 @@ export default function BookingPage() {
 
     setIsSubmitting(true);
 
-    // 💡 তোমার ব্যাকএন্ডের হুবহু পেলোড (Payload) স্ট্রাকচার!
     const bookingData: BookingRequestData = {
       serviceId: service.id,
       technicianId: service.technicianId,
-      serviceDate: format(date, "yyyy-MM-dd"), // "2026-08-30" ফরমেটে যাবে
+      serviceDate: format(date, "yyyy-MM-dd"),
       scheduledTime: timeSlot,
     };
 
@@ -83,7 +80,7 @@ export default function BookingPage() {
 
     if (result.success) {
       toast.success(result.message);
-      router.push("/dashboard/customer"); // বুকিং ডান হলে ড্যাশবোর্ডে পাঠাবে
+      router.push("/dashboard/customer");
     } else {
       toast.error(result.message);
     }
@@ -126,7 +123,7 @@ export default function BookingPage() {
           </CardHeader>
 
           <CardContent className="space-y-8 mt-6">
-            {/* 💡 Technician Details Card */}
+            {/* Technician Details Card */}
             {service.technician && (
               <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 flex gap-4 items-center">
                 <div className="bg-white p-3 rounded-full shadow-sm">

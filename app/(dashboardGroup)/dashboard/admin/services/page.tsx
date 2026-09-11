@@ -1,4 +1,3 @@
-// app/(dashboardGroup)/dashboard/admin/services/page.tsx
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
@@ -25,7 +24,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 export default function AdminServicesPage() {
-  // 💡 React Query দিয়ে সব সার্ভিস আনছি
   const { data: services = [], isLoading } = useQuery({
     queryKey: ["admin-all-services"],
     queryFn: async () => await getAllPublicServicesAction(""),

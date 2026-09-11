@@ -1,4 +1,3 @@
-// app/(authGroup)/_components/RegisterForm.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -39,7 +38,7 @@ const registerSchema = z.object({
     .or(z.literal("")),
   address: z.string().optional().or(z.literal("")),
   role: z.enum(["CUSTOMER", "TECHNICIAN"], { message: "Please select a role" }),
-  // Conditional fields (এগুলো অপশনাল রাখছি, কারণ কাস্টমারের লাগবে না)
+
   skills: z.string().optional(),
   experience: z.string().optional(),
   pricing: z.string().optional(),
@@ -59,14 +58,12 @@ export default function RegisterForm() {
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { role: "CUSTOMER" }, // ডিফল্ট কাস্টমার
+    defaultValues: { role: "CUSTOMER" },
   });
 
-  // 💡 ম্যাজিক ট্রিক: রিয়েল-টাইমে রোল চেক করা
   const selectedRole = watch("role");
 
   const onSubmit = async (data: RegisterFormValues) => {
-    // ম্যানুয়াল ভ্যালিডেশন (যদি টেকনিশিয়ান হয়, তবে ফিল্ডগুলো ফাঁকা রাখা যাবে না)
     if (selectedRole === "TECHNICIAN") {
       if (!data.skills || !data.experience || !data.pricing) {
         toast.error(
@@ -181,7 +178,6 @@ export default function RegisterForm() {
             )}
           </div>
 
-          {/* 💡 Conditional Rendering (শুধু TECHNICIAN এর জন্য) */}
           {selectedRole === "TECHNICIAN" && (
             <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg space-y-4 mt-4 animate-in fade-in slide-in-from-top-4">
               <h3 className="font-semibold text-blue-800">

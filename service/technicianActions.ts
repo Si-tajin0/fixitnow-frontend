@@ -4,7 +4,6 @@ import { proxy } from "@/apiFetcher";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import {
-  CreateServicePayload,
   Service,
   Technician,
   UpdateTechnicianProfilePayload,

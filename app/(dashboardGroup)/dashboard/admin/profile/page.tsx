@@ -1,4 +1,3 @@
-// app/(dashboardGroup)/dashboard/admin/profile/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import toast from "react-hot-toast";
-import { useQuery, useQueryClient } from "@tanstack/react-query"; // 💡 React Query ইম্পোর্ট
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ShieldCheck, Loader2, Mail, Phone, MapPin, Edit } from "lucide-react";
 
 import {
@@ -56,7 +55,6 @@ export default function AdminProfilePage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 💡 React Query ম্যাজিক: কোনো useState বা useEffect দিয়ে ডেটা আনার দরকার নেই!
   const { data: profileData, isLoading } = useQuery({
     queryKey: ["admin-profile"],
     queryFn: async () => await getAdminProfileAction(),
@@ -71,7 +69,6 @@ export default function AdminProfilePage() {
     resolver: zodResolver(profileSchema),
   });
 
-  // 💡 ডেটা আসলে শুধু ফর্মে অটো-ফিল করে দিবো (কোনো এরর আসবে না)
   useEffect(() => {
     if (profileData) {
       reset({
@@ -97,7 +94,6 @@ export default function AdminProfilePage() {
     if (result.success) {
       toast.success(result.message);
       setIsModalOpen(false);
-      // 💡 ডেটাবেজ আপডেট হলে React Query অটোমেটিক নতুন ডেটা এনে স্ক্রিনে দেখিয়ে দিবে!
       queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
     } else {
       toast.error(result.message || "Failed to update profile!");

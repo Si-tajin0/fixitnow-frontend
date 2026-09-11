@@ -9,6 +9,7 @@ import { Booking } from "@/lib/types";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { MapPin, Phone, User } from "lucide-react";
 
 const TechnicianDashboardPage = () => {
   const { data: bookings, isLoading, isError } = useBookings();
@@ -91,12 +92,21 @@ const TechnicianDashboardPage = () => {
             </CardHeader>
 
             <CardContent className="pt-6 flex justify-between items-center">
-              <div>
-                <p className="text-gray-700 font-medium">
-                  Customer ID: {booking.customerId}
+              <div className="space-y-2 bg-blue-50 p-4 rounded-lg w-full md:w-1/2 border border-blue-100">
+                <p className="text-xs uppercase font-bold text-blue-500 tracking-wider mb-2">
+                  Customer Details
                 </p>
-                <p className="text-2xl font-bold text-gray-900 mt-2">
-                  ${booking.service?.price || 0}
+                <p className="text-gray-800 font-bold flex items-center">
+                  <User className="w-4 h-4 mr-2 text-blue-600" />
+                  {booking.customer?.name || "Unknown Customer"}
+                </p>
+                <p className="text-sm text-gray-600 flex items-center">
+                  <Phone className="w-4 h-4 mr-2 text-blue-600" />
+                  {booking.customer?.phone || "Phone not provided"}
+                </p>
+                <p className="text-sm text-gray-600 flex items-center">
+                  <MapPin className="w-4 h-4 mr-2 text-blue-600" />
+                  {booking.customer?.address || "Address not provided"}
                 </p>
               </div>
 

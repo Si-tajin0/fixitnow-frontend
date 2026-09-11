@@ -85,6 +85,12 @@ export interface Booking {
     | "CANCELLED";
   service?: Service;
   technician?: Technician;
+  customer?: {
+    name: string;
+    email: string;
+    phone?: string;
+    address?: string;
+  };
 }
 
 export interface CreateServicePayload {
